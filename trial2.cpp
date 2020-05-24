@@ -1,16 +1,17 @@
 // read and successfully done log .....
 
 #include<bits/stdc++.h>
-#include <pthread.h>
-#include <unistd.h>
+#include<pthread.h>
+#include<unistd.h>
 
 using namespace std;
 
 std::vector<string> column;
+ 
 
 void *average(void *m)
 {
-//	sleep(10);
+
 	cout << "Inside Average.." << endl;
 	double a[15];
 	
@@ -21,16 +22,15 @@ void *average(void *m)
 
 	long long int j = 0, i = 0, c = 1;
 	double holder;
-	cout << column.size() << endl; 
 
 	while(i < column.size()-1)
 	{
-		if(column[i] != "\n")
+		if(column[i] != "\n") 
 		{
+			
 			holder = stod(column[i]);
 			a[j] = a[j] + holder;
 			j++;
-		//	cout << "j : " << j << " : " << " holder : " << holder << " : " << a[j] << endl;
 		}
 		else if (column[i] == "\n")
 		{
@@ -40,24 +40,24 @@ void *average(void *m)
 		i++;
 	}
 
-	//cout << "Outside\n";
+	cout << "Outside : " << c << endl;
+
+	double result;
 
 	for(int k = 0; k < j; k++)
-	{
-		cout << "column : " << (k+1) << " : " << (a[k]/c) << endl;
+	{	
+		result = a[k]/c;
+		cout << "column : " << (k+1) << " : " << result << endl;
 	}	
-
-	pthread_exit(NULL);
 
 }
 
 void *logger(void *l)
 {
-	cout << "printing from Log :\n";
+	cout << "Inside logger :\n";
 	long long int i = 0;
 	double holder;
-	sleep(2);
-	cout << "From logger : " <<column.size() << endl;
+	
 	while(i < column.size())
 	{
 		if(column[i] != "\n")
@@ -65,14 +65,12 @@ void *logger(void *l)
 			holder = stod(column[i]);
 			holder = log10(holder);
 			column[i] = to_string(holder);
-	//		cout << column[i] << "h ,  ";
 		}
 		i++;
 		
 	}
-	cout << " logger done ..\n"; 
+	 cout << " logger done ..\n"; 
 
-	pthread_exit(NULL);
 
 }
 
@@ -86,7 +84,6 @@ void *file_reader(void *t)
 
 	while(fin >> temp)
 	{
-	//	cout << "reading"; 
 		row.clear();
 		stringstream s(temp);
 
@@ -99,16 +96,7 @@ void *file_reader(void *t)
 
 	}
 	cout << "\n done reading....\n";
-	// for(long long int i = 0; i < column.size(); i++)
-	// {
-	// 	if(column[i] != "\n")
-	// 		cout << column[i] << " ";
-	// 	else
-	// 		cout << endl;
-		
-	// }	
 
-	pthread_exit(NULL);
 }
 
 int main()
@@ -123,24 +111,26 @@ int main()
 	time_t start, end;
 
 	time(&start);
+	
 	cout<<"calling function 1:\n";
 	rR = pthread_create(&threads, NULL, file_reader, NULL);
 	
+	sleep(2);			//just ot make sure read starts execution first.
+
 	cout<<"calling function 2:\n";
 	rL = pthread_create(&log, NULL, logger, NULL);
-	pthread_join(log, NULL);	
 	
-	time(&end);
+	sleep(2);
 
 	cout<<"calling function 3:\n";
 	rM = pthread_create(&mean, NULL, average, NULL);
 	
 	pthread_join(threads, NULL);	
+	pthread_join(log, NULL);	
 	pthread_join(mean, NULL);
 	
+	time(&end);
 
-	cout << "S : " << double(start);
-	cout << "E : " << double(end);
 	double runtime = double(end - start);
 	cout << "\n The runtime : " << runtime << endl;
 	return 0;	

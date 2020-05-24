@@ -107,27 +107,34 @@ void mean_sd()
 
 int main()
 {
-    auto start_time = high_resolution_clock::now();
+//    auto start_time = high_resolution_clock::now();
 
+    time_t start, end;
+    
+    time(&start);
+    
     thread t1(read_csv);
 
     thread t2(cal_log);
 
-    thread t3(min_and_max);
+//    thread t3(min_and_max);
 
-    thread t4(mean_sd);
+//    thread t4(mean_sd);
 
     t1.join();
     t2.join();
-    t3.join();
-    t4.join();
+//    t3.join();
+//    t4.join();
+    
+    time(&end);
 
+    double runtime = double(end - start);
+    cout << "\n The runtime : " << runtime << endl;
+  
+    // auto fin_time = high_resolution_clock::now();
+    // auto duration = duration_cast<microseconds>(fin_time - start_time);
 
-
-    auto fin_time = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(fin_time - start_time);
-
-    cout << "Runtime : " << duration.count()<<endl;
+    // cout << "Runtime : " << duration.count()<<endl;
 
     return 0;
 }

@@ -1,104 +1,82 @@
-// read and succesfully done log .....
-
-#include <iostream>
 #include <pthread.h>
-#include <unistd.h>
-#include<fstream>
-#include<vector>
 #include<bits/stdc++.h>
-#include<string>
-#include<sstream>
+#include <unistd.h>
+#include <stdio.h>
 
 using namespace std;
 
-std::vector<string> column;
+#define NUM_THREADS 3
+#define TCOUNT 10
+#define COUNT_LIMIT 12
 
-void *logger(void *l)
+int counter = 0;
+int thread_ids[3] = {0,1,2};
+pthread_mutex_t count_mutex;
+pthread_cond_t count_threshold_cv;
+
+void *inc_count(void *t)
 {
-	cout << "printing from LOg :\n";
-	cout << "column size : " << column.size() << endl;
-	int i = 0;
-	double holder;
-	sleep(0.1);
-	while(i < column.size())
+	long my_id = (long)t;
+	for (int i=0; i<TCOUNT; i++) 
 	{
-		cout << "Column size : " << column.size() << endl;
-		if(column[i] != "\n")
-		{
-			holder = stod(column[i]);
-			holder = log10(holder);
-			column[i] = to_string(holder);
-			cout << column[i] << "  ";
+		pthread_mutex_lock(&count_mutex);
+		counter++;
+		cout << "1  ";
+		if (counter == COUNT_LIMIT)
+		{ 
+			cout << "2  ";														// 6  6 
+			pthread_cond_signal(&count_threshold_cv); 							
+			cout << "3  ";																			
 		}
-		else
-		{
-			cout << endl;
-		}
-		
-		i++;
-		
+		cout << "4  ";														
+		pthread_mutex_unlock(&count_mutex);
+		cout << "5  ";
+		//sleep(1);
 	}
-	//cout << "column size1 : " << column.size() << endl;
-	cout << endl;
-
+	cout << "6  ";
+	pthread_exit(NULL);
+}
+void *watch_count(void *t)
+{
+	long my_id = (long)t;
+	
+	pthread_mutex_lock(&count_mutex);
+	
+	cout << "7  ";
+	if (counter < COUNT_LIMIT) 
+	{
+		cout << "8  ";
+		pthread_cond_wait(&count_threshold_cv, &count_mutex);
+		cout << "9  ";																
+		counter += 125;
+		cout << "10  ";
+	}
+	cout << "11  ";
+	pthread_mutex_unlock(&count_mutex);
+	cout << "12  ";
+	pthread_exit(NULL);
 }
 
-void *file_reader(void *t)
+int main (int argc, char *argv[])
 {
-	cout << "inside Reader..\n";
-	fstream fin;
-	fin.open("project_file.csv", ios::in);
-	std::vector<string> row;
-	string line, word, temp;
-
-	while(fin >> temp)
-	{
-		row.clear();
-		stringstream s(temp);
-
-		while(getline(s, word, ','))
-		{
-			row.push_back(word);
-			column.push_back(word);
-		}
-		column.push_back("\n");
-
+	int I;
+	long t1=1, t2=2, t3=3;
+	pthread_t threads[3];
+	pthread_attr_t attr;
+	pthread_mutex_init(&count_mutex, NULL);
+	pthread_cond_init (&count_threshold_cv, NULL);
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_create(&threads[0], &attr, watch_count, (void *)t1);
+	pthread_create(&threads[1], &attr, inc_count, (void *)t2);
+	pthread_create(&threads[2], &attr, inc_count, (void *)t3);
+	
+	for (int i=0; i<NUM_THREADS; i++) 
+	{ /* Wait for all threads */
+		pthread_join(threads[i], NULL);
 	}
-	cout << "\n done reading....\n";
-	for(int i = 0; i < column.size(); i++)
-	{
-		if(column[i] != "\n")
-			cout << " R : " << column[i];
-		else
-			cout << endl;
-		
-	}	
-
-}
-
-int main()
-{
-
-	int rR, rL;
-	pthread_t threads;
-	pthread_t log;
-	void *status;
-	int i = 0;
-	cout<<"calling function 1:\n";
-	rR, rR = pthread_create(&threads, NULL, file_reader, NULL);
-	if (rR) {
-         cout << "Error:unable to join," << rR << endl;
-         exit(-1);
-      }
-	cout<<"calling function 2:\n";
-	rL = pthread_create(&log, NULL, logger, NULL);
-	if (rL) {
-         cout << "Error:unable to join," << rL << endl;
-         exit(-1);
-      }
-
-	pthread_join(threads, NULL);
-	pthread_join(log, NULL);
-	sleep(1);
-	return 0;	
+	pthread_attr_destroy(&attr);
+	pthread_mutex_destroy(&count_mutex);
+	pthread_cond_destroy(&count_threshold_cv);
+	pthread_exit(NULL);
 }
